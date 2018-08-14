@@ -20,6 +20,7 @@ import com.snail.core.utils.ConvertorUtil;
 import com.snail.core.utils.MpUtil;
 import com.snail.core.utils.PageBean;
 import com.snail.core.utils.RequestUtils;
+import com.snail.core.utils.ResultMapUtil;
 import com.snail.core.utils.TokenUtil;
 
 @Controller
@@ -29,51 +30,74 @@ public class MpController {
 	
 	private static final Logger log = LoggerFactory.getLogger(MpController.class);
 
-	@RequestMapping("/index.htm")
-	@ResponseBody
-	public String index() {
-		return "xxxx";
-	}
-	
 	/**
 	 * 获取题目
 	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping("/getQuestionList.htm")
 	@ResponseBody
-	public String getQuestionList(HttpServletRequest request,Integer pageSize) throws JsonGenerationException, JsonMappingException, IOException {
+	public String getQuestionList(HttpServletRequest request) throws JsonGenerationException, JsonMappingException, IOException {
 		String body = RequestUtils.getReq(request);
 		Map<String, Object> req_params = ConvertorUtil.objectMapper.readValue(body, Map.class);
 		PageBean pageBean  = new PageBean();
-		log.info("/getQuestionList.htm");
-		//获取token
-		String token = TokenUtil.getToken();
-		if(StringUtils.isNotBlank(token)) {
-			Map<String, Object> params = new HashMap<String, Object>();
-			params.put("token",token);
-			if(req_params.get("pageSize") != null) {
-				params.put("pageSize",(Integer)req_params.get("pageSize"));
-			}
-			if(req_params.get("pageNum") != null) {
-				params.put("pageNum",(Integer)req_params.get("pageNum"));
-			}
-			
-			params.put("categoryCode","one");
-			log.info("[getQuestionList][params={}]",params);
-			pageBean = MpUtil.getQuestionList(params);
+		log.info("[/getQuestionList.htm][getQuestionList][req_params={}]",req_params);
+		String openid = (String) req_params.get("openid");
+		Integer type = Integer.parseInt(req_params.get("type") + "");
+		if(StringUtils.isNotBlank(openid) && type != null) {
+			pageBean = MpUtil.getCacheQuestion(openid,type);
 		}
-		log.info("[getQuestionList][pageBean={}]",pageBean);
+		log.info("[/getQuestionList.htm][getQuestionList][pageBean total={}]",pageBean.getTotal());
 		return ConvertorUtil.objectToJson(pageBean);
 	}
 	
 	
-	
-	public Map<String, Object> subjectOneStatistics(HttpServletRequest request) throws JsonParseException, JsonMappingException, IOException{
+	/**
+	 * 将答案保存到题库
+	 * @param request
+	 * @return
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 */
+	@SuppressWarnings("unchecked")
+	@ResponseBody
+	@RequestMapping("/saveAnswer.htm")
+	public Map<String, Object> saveAnswer(HttpServletRequest request) throws JsonParseException, JsonMappingException, IOException{
 		String body = RequestUtils.getReq(request);
 		Map<String, Object> req_params = ConvertorUtil.objectMapper.readValue(body, Map.class);
-		return null;
-		
+		log.info("[/saveAnswer.htm][saveAnswer][req_params={}]",req_params);
+		String openid = (String) req_params.get("openid");
+		Integer type = Integer.parseInt(req_params.get("type") + "");
+		Map<String, Object> rst = new HashMap<String, Object>();
+		if(StringUtils.isNotBlank(openid) && type != null) {
+			rst = MpUtil.saveAnswer(req_params);
+		}else {
+			ResultMapUtil.toMap(rst,0,"保存失败");
+		}
+		return rst;
 	}
     
+	/**
+	 * 获取答题进度
+	 * @param request
+	 * @return
+	 * @throws IOException 
+	 * @throws JsonMappingException 
+	 * @throws JsonParseException 
+	 */
+	@SuppressWarnings("unchecked")
+	@ResponseBody
+	@RequestMapping("/getAnswerSchedule.htm")
+	public Map<String, Object> getAnswerSchedule(HttpServletRequest request) throws JsonParseException, JsonMappingException, IOException{
+		String body = RequestUtils.getReq(request);
+		Map<String, Object> req_params = ConvertorUtil.objectMapper.readValue(body, Map.class);
+		log.info("[/getAnswerSchedule.htm][getAnswerSchedule][req_params={}]",req_params);
+		String openid = (String) req_params.get("openid");
+		Map<String, Object> rst = new HashMap<String, Object>();
+		if(StringUtils.isNotBlank(openid) ) {
+			rst = MpUtil.getCacheAnswerSchedule(req_params);
+		}
+		return rst;
+	}
 	
 }

@@ -4,6 +4,7 @@ import java.util.List;
 
 public class PageBean {
 
+	
 	/**
 	 * 当前页数
 	 */
@@ -19,12 +20,17 @@ public class PageBean {
 	/**
 	 * total 总数
 	 */
-	private Long total;
+	private Integer total;
 
 	/**
 	 * 总页数
 	 */
 	private Integer pageCount;
+	
+	/**
+	 * 类型
+	 */
+	private Integer type;
 
 	/**
 	 * 结果集
@@ -71,18 +77,27 @@ public class PageBean {
 		this.resultList = resultList;
 	}
 
-	public Long getTotal() {
+	public Integer getTotal() {
 		return total;
 	}
 
-	public void setTotal(Long total) {
+	public void setTotal(Integer total) {
 		this.total = total;
+	}
+
+	public Integer getType() {
+		return type;
+	}
+
+	public void setType(Integer type) {
+		this.type = type;
 	}
 
 	@Override
 	public String toString() {
 		return "PageBean [currentPage=" + currentPage + ", pageSize=" + pageSize + ", recordCount=" + recordCount
-				+ ", total=" + total + ", pageCount=" + pageCount + ", resultList=" + resultList + "]";
+				+ ", total=" + total + ", pageCount=" + pageCount + ", type=" + type + ", resultList=" + resultList
+				+ "]";
 	}
-
+	
 }
