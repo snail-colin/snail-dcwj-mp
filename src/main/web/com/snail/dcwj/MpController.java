@@ -100,4 +100,26 @@ public class MpController {
 		return rst;
 	}
 	
+	/**
+	 * 获取试卷
+	 */
+	@SuppressWarnings("unchecked")
+	@RequestMapping("/getTestPaper.htm")
+	@ResponseBody
+	public String getTestPaper(HttpServletRequest request) throws JsonGenerationException, JsonMappingException, IOException {
+		String body = RequestUtils.getReq(request);
+		Map<String, Object> req_params = ConvertorUtil.objectMapper.readValue(body, Map.class);
+		PageBean pageBean  = new PageBean();
+		log.info("[/getTestPaper.htm][getTestPaper][req_params={}]",req_params);
+		String openid = (String) req_params.get("openid");
+		Integer type = Integer.parseInt(req_params.get("type") + "");
+		if(StringUtils.isNotBlank(openid) && type != null) {
+			pageBean = MpUtil.getTestPaper(openid,type);
+		}
+		log.info("[/getTestPaper.htm][getTestPaper][pageBean total={}]",pageBean.getTotal());
+		return ConvertorUtil.objectToJson(pageBean);
+	}
+	
+	
+	
 }

@@ -31,6 +31,11 @@ public class PageBean {
 	 * 类型
 	 */
 	private Integer type;
+	
+	/**
+	 * 唯一标识
+	 */
+	private String uuid;
 
 	/**
 	 * 结果集
@@ -93,11 +98,19 @@ public class PageBean {
 		this.type = type;
 	}
 
+	public String getUuid() {
+		return uuid;
+	}
+
+	public void setUuid(String uuid) {
+		this.uuid = uuid;
+	}
+
 	@Override
 	public String toString() {
 		return "PageBean [currentPage=" + currentPage + ", pageSize=" + pageSize + ", recordCount=" + recordCount
-				+ ", total=" + total + ", pageCount=" + pageCount + ", type=" + type + ", resultList=" + resultList
-				+ "]";
+				+ ", total=" + total + ", pageCount=" + pageCount + ", type=" + type + ", uuid=" + uuid
+				+ ", resultList=" + resultList + "]";
 	}
 	
 }
