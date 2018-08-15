@@ -1,5 +1,6 @@
 package com.snail.core.utils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -8,8 +9,12 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.snail.core.pojo.Paper;
 
 /**
  * 用于获取平台数据
@@ -208,5 +213,44 @@ public class MpUtil {
 		}
 		
 		return rst;
+	}
+
+	public static PageBean getTestPaper(String openid, Integer type) {
+		log.info("[MpUtil][unchecked][openid={}]", openid);
+		PageBean pageBean = new PageBean();
+		try {
+			// 获取token
+			String token = TokenUtil.getToken();
+			Map<String, Object> params = new HashMap<String, Object>();
+			params.put("token", token);
+			params.put("categoryCode", "one");
+			params.put("pageSize", 100);
+			params.put("qtype", type);
+			pageBean = MpUtil.getQuestionList(params);
+			pageBean.setType(type);
+			// 产生一个唯一编码
+			String uuid = SequenceUtil.getUid(3);
+			log.info("[MpUtil][unchecked][openid={}][uuid={}]", openid,uuid);
+			String key = openid + "|" + Paper.class;
+			Paper paper =		CacheUtil.getCache(Paper.class, key);
+			log.info("[MpUtil][unchecked][openid={}][缓存中的paper={}]", openid,paper);
+			if(paper == null) {
+				paper =	new Paper();
+			}
+			Map<String, Object> uuidMap = paper.getUuid();
+			if(uuidMap == null) {
+				uuidMap = new HashMap<String, Object>();
+			}
+			uuidMap.put(uuid, uuid);
+			paper.setUuid(uuidMap);
+			log.info("[MpUtil][unchecked][openid={}][准备更新到缓存的paper={}]", openid,paper);
+			CacheUtil.updateCache(key ,paper);
+			pageBean.setUuid(uuid);
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.info("[MpUtil][unchecked][openid={}][exception={}]", openid,e);
+		}
+		log.info("[MpUtil][unchecked][openid={}][pageBean total={}]", openid, pageBean.getTotal());
+		return pageBean;
 	}
 }
