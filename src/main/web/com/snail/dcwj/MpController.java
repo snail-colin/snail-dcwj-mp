@@ -21,7 +21,6 @@ import com.snail.core.utils.MpUtil;
 import com.snail.core.utils.PageBean;
 import com.snail.core.utils.RequestUtils;
 import com.snail.core.utils.ResultMapUtil;
-import com.snail.core.utils.TokenUtil;
 
 @Controller
 @RequestMapping
@@ -121,5 +120,25 @@ public class MpController {
 	}
 	
 	
+	/**
+	 * 交卷
+	 * @param request
+	 * @return
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 */
+	@SuppressWarnings("unchecked")
+	@RequestMapping("/submitPaper.htm")
+	@ResponseBody
+	public Map<String, Object> submitPaper(HttpServletRequest request) throws JsonParseException, JsonMappingException, IOException{
+		String body = RequestUtils.getReq(request);
+		Map<String, Object> req_params = ConvertorUtil.objectMapper.readValue(body, Map.class);
+		log.info("[/getTestPaper.htm][submitPaper][req_params={}]",req_params);
+		Map<String, Object> rst = new HashMap<String, Object>();
+		rst = MpUtil.submitPaperToCache(req_params);
+		log.info("[/getTestPaper.htm][submitPaper][rst={}]",rst);
+		return rst;
+	}
 	
 }

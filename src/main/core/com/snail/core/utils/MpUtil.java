@@ -1,6 +1,5 @@
 package com.snail.core.utils;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -9,12 +8,12 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.snail.core.pojo.Paper;
+import com.snail.core.pojo.PaperDetail;
+import com.snail.core.thread.ThreadPool;
 
 /**
  * 用于获取平台数据
@@ -142,7 +141,7 @@ public class MpUtil {
 	@SuppressWarnings("unchecked")
 	public static Map<String, Object> saveAnswer(Map<String, Object> params) {
 		Map<String, Object> rst = new HashMap<String, Object>();
-		long session = System.currentTimeMillis() + RandomUtils.nextInt(9);
+		final long session = System.currentTimeMillis() + RandomUtils.nextInt(9);
 		log.info("[MpUtil][saveAnswer][{}][params={}]",session,params);
 		try {
 			String json = (String) params.get("question");
@@ -150,6 +149,18 @@ public class MpUtil {
 				String openid = (String) params.get("openid");
 				Integer type = Integer.parseInt(params.get("type") + "");
 				Integer currentIndex = Integer.parseInt(params.get("currentIndex") + "");
+				
+				Map<String, Object> jsonMap = ConvertorUtil.objectMapper.readValue(json, Map.class);
+				String questionId = (String) jsonMap.get("id");
+				List<Map<String, Object>> optionList = (List<Map<String, Object>>) jsonMap.get("option");
+				String answer = "-1";
+				for (Map<String, Object> map : optionList) {
+					if(map.get("select") == null || (Boolean)map.get("select") == false) {
+						continue;
+					}
+					answer =  (String) map.get("value");
+				}
+	
 				String key = openid + "|" + type;
 				PageBean pageBean = CacheUtil.getCache(PageBean.class, key);
 				if (pageBean == null) {
@@ -179,6 +190,23 @@ public class MpUtil {
 				CacheUtil.updateCache(key, pageBean);
 				log.info("[MpUtil][saveAnswer][{}][更新缓存数据完成]",session);
 				ResultMapUtil.toMap(rst, 1, "保存成功");
+				
+				//异步存储
+				final Map<String, Object> mpParams = new HashMap<String, Object>();
+				mpParams.put("questionId", questionId);
+				mpParams.put("answer", answer);
+				mpParams.put("type", type);
+				mpParams.put("userMark", openid);
+				mpParams.put("paperId", "SYSTEM_QUESTION_"  + "ONE$" +  openid + "$" + type);
+				
+				log.info("[MpUtil][saveAnswer][{}][开始更新到平台]",session);
+				ThreadPool.getFixedInstance().execute(new Runnable() {
+					public void run() {
+						boolean  mpRst = saveAnswerToMp(mpParams);
+						log.info("[MpUtil][saveAnswer][{}][更新到平台完成 mpRst = {}]",session,mpRst);
+					}
+				});
+				log.info("[MpUtil][saveAnswer][{}][结束到平台完成]",session);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -237,11 +265,11 @@ public class MpUtil {
 			if(paper == null) {
 				paper =	new Paper();
 			}
-			Map<String, Object> uuidMap = paper.getUuid();
+			Map<String, PaperDetail> uuidMap = paper.getUuid();
 			if(uuidMap == null) {
-				uuidMap = new HashMap<String, Object>();
+				uuidMap = new HashMap<String, PaperDetail>();
 			}
-			uuidMap.put(uuid, uuid);
+			uuidMap.put(uuid, new PaperDetail(uuid));
 			paper.setUuid(uuidMap);
 			log.info("[MpUtil][unchecked][openid={}][准备更新到缓存的paper={}]", openid,paper);
 			CacheUtil.updateCache(key ,paper);
@@ -252,5 +280,55 @@ public class MpUtil {
 		}
 		log.info("[MpUtil][unchecked][openid={}][pageBean total={}]", openid, pageBean.getTotal());
 		return pageBean;
+	}
+	
+	
+	@SuppressWarnings("unchecked")
+	public static Map<String, Object> submitPaperToCache(Map<String, Object> params){
+		Map<String, Object> rst = new HashMap<String, Object>();
+		long session = System.currentTimeMillis() + RandomUtils.nextInt(9);
+		log.info("[MpUtil][submitPaperToCache][{}][params={}]",session,params);
+		try {
+			String json = (String) params.get("paperDetail");
+			String openid = (String) params.get("openid");
+			if (StringUtils.isBlank(json) || StringUtils.isBlank(openid) ) {
+				ResultMapUtil.toMap(rst, 0, "必传参数不能为空");
+				return rst;
+			}
+			Map<String, Object> questionMap = ConvertorUtil.objectMapper.readValue(json, Map.class);
+			//TODO 
+		} catch (Exception e) {
+			e.printStackTrace();
+			ResultMapUtil.toMap(rst, 0, "保存失败");
+			log.info("[MpUtil][submitPaperToCache][{}][exception={}]",session,e);
+		}
+		log.info("[MpUtil][submitPaperToCache][{}][rst={}]",session,rst);
+		return rst;
+	}
+	
+	
+	@SuppressWarnings("unchecked")
+	public static boolean saveAnswerToMp(Map<String, Object> params) {
+		boolean rst = false;
+		String url = PropertiesUtil.MP_URL + "/api/pms/answer";
+		log.info("[MpUtil][getQuestionList][前params={}]", params);
+		// 获取token
+		String token = TokenUtil.getToken();
+		params.put("token", token);
+		log.info("[MpUtil][getQuestionList][后params={}]", params);
+		String result = HttpClientUtil.getRequst(params, url);
+		log.info("[MpUtil][getQuestionList][result={}]", result);
+		if (StringUtils.isNotBlank(result)) {
+			Map<String, Object> ret;
+			try {
+				ret = ConvertorUtil.objectMapper.readValue(result, Map.class);
+				if ((Integer) ret.get("status") == 1) {
+					rst = true;
+				}
+			}catch (Exception e) {
+				log.info("[MpUtil][getQuestionList][ e={}]",  e);
+			}
+		}
+		return rst;
 	}
 }

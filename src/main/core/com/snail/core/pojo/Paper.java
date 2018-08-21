@@ -3,6 +3,11 @@ package com.snail.core.pojo;
 import java.io.Serializable;
 import java.util.Map;
 
+/**
+ * 试卷
+ * @author colin
+ *
+ */
 public class Paper implements Serializable{
 
 	/**
@@ -12,22 +17,19 @@ public class Paper implements Serializable{
 	/**
 	 * 试卷唯一标识集合
 	 */
-	private Map<String, Object> uuid;
+	private Map<String, PaperDetail> uuid;
 
-
-	public Map<String, Object> getUuid() {
+	public Map<String, PaperDetail> getUuid() {
 		return uuid;
 	}
 
-
-	public void setUuid(Map<String, Object> uuid) {
+	public void setUuid(Map<String, PaperDetail> uuid) {
 		this.uuid = uuid;
 	}
-
 
 	@Override
 	public String toString() {
 		return "Paper [uuid=" + uuid + "]";
 	}
-	
+
 }
