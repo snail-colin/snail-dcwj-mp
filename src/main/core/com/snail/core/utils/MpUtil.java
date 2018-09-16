@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import com.snail.core.pojo.Paper;
 import com.snail.core.pojo.PaperDetail;
+import com.snail.core.pojo.TypeConstants;
 import com.snail.core.thread.ThreadPool;
 
 /**
@@ -243,25 +244,44 @@ public class MpUtil {
 		return rst;
 	}
 
-	public static PageBean getTestPaper(String openid, Integer type) {
-		log.info("[MpUtil][unchecked][openid={}]", openid);
+	/**
+	 * 获取题目
+	 * @param openid
+	 * @param type
+	 * @param examType
+	 * @param categoryCode
+	 * @param bn
+	 * @return
+	 */
+	public static PageBean getTestPaper(String openid, Integer type,byte examType,String categoryCode,String bn) {
+		log.info("[MpUtil][getTestPaper][openid={}]", openid);
 		PageBean pageBean = new PageBean();
 		try {
 			// 获取token
-			String token = TokenUtil.getToken();
+			String token = "";
+			if(StringUtils.isNotBlank(bn)) {
+				token = TokenUtil.getToken(bn);
+			}else {
+				token = TokenUtil.getToken();
+			}
 			Map<String, Object> params = new HashMap<String, Object>();
 			params.put("token", token);
 			params.put("categoryCode", "one");
+			//指定题目
+			if(StringUtils.isNotBlank(categoryCode)) {
+				params.put("categoryCode", categoryCode);
+			}
 			params.put("pageSize", 100);
 			params.put("qtype", type);
+
 			pageBean = MpUtil.getQuestionList(params);
 			pageBean.setType(type);
 			// 产生一个唯一编码
 			String uuid = SequenceUtil.getUid(3);
-			log.info("[MpUtil][unchecked][openid={}][uuid={}]", openid,uuid);
+			log.info("[MpUtil][getTestPaper][openid={}][uuid={}]", openid,uuid);
 			String key = openid + "|" + Paper.class;
 			Paper paper =		CacheUtil.getCache(Paper.class, key);
-			log.info("[MpUtil][unchecked][openid={}][缓存中的paper={}]", openid,paper);
+			log.info("[MpUtil][getTestPaper][openid={}][缓存中的paper={}]", openid,paper);
 			if(paper == null) {
 				paper =	new Paper();
 			}
@@ -269,21 +289,34 @@ public class MpUtil {
 			if(uuidMap == null) {
 				uuidMap = new HashMap<String, PaperDetail>();
 			}
-			uuidMap.put(uuid, new PaperDetail(uuid));
+			log.info("[MpUtil][getTestPaper][openid={}][uuidMap size={}]", openid,uuidMap.size());
+			//只能获取一次试卷
+			if(TypeConstants.EXAM_TYPE_ONE == examType) {
+				log.info("[MpUtil][getTestPaper][openid={}][只能获取一次试卷 examType={}]", openid,examType);
+				if(!uuidMap.containsKey(openid)) {
+					uuidMap.put(openid, new PaperDetail(openid));
+				}
+				uuid = openid;
+			}else {
+				uuidMap.put(uuid, new PaperDetail(uuid));
+			}
 			paper.setUuid(uuidMap);
-			log.info("[MpUtil][unchecked][openid={}][准备更新到缓存的paper={}]", openid,paper);
+			log.info("[MpUtil][getTestPaper][openid={}][准备更新到缓存的paper={}]", openid,paper);
 			CacheUtil.updateCache(key ,paper);
 			pageBean.setUuid(uuid);
 		} catch (Exception e) {
 			e.printStackTrace();
-			log.info("[MpUtil][unchecked][openid={}][exception={}]", openid,e);
+			log.info("[MpUtil][getTestPaper][openid={}][exception={}]", openid,e);
 		}
-		log.info("[MpUtil][unchecked][openid={}][pageBean total={}]", openid, pageBean.getTotal());
+		log.info("[MpUtil][getTestPaper][openid={}][pageBean total={}]", openid, pageBean.getTotal());
 		return pageBean;
 	}
 	
-	
-	@SuppressWarnings("unchecked")
+	/**
+	 * 提交试卷
+	 * @param params
+	 * @return
+	 */
 	public static Map<String, Object> submitPaperToCache(Map<String, Object> params){
 		Map<String, Object> rst = new HashMap<String, Object>();
 		long session = System.currentTimeMillis() + RandomUtils.nextInt(9);
@@ -291,12 +324,24 @@ public class MpUtil {
 		try {
 			String json = (String) params.get("paperDetail");
 			String openid = (String) params.get("openid");
-			if (StringUtils.isBlank(json) || StringUtils.isBlank(openid) ) {
+			String uuid = (String) params.get("uuid");
+			if (StringUtils.isBlank(json) || StringUtils.isBlank(uuid) || StringUtils.isBlank(openid) ) {
 				ResultMapUtil.toMap(rst, 0, "必传参数不能为空");
 				return rst;
 			}
-			Map<String, Object> questionMap = ConvertorUtil.objectMapper.readValue(json, Map.class);
-			//TODO 
+			PaperDetail  pd = ConvertorUtil.jsonToObject(PaperDetail.class,json);
+			String key = openid + "|" + Paper.class;
+			Paper paper =	CacheUtil.getCache(Paper.class, key);
+			log.info("[MpUtil][submitPaperToCache][openid={}][缓存中的paper={}]", openid,paper);
+	
+			if(StringUtils.isBlank(ConvertorUtil.jsonToObject(PaperDetail.class, ConvertorUtil.objectMapper.writeValueAsString(paper.getUuid().get(uuid))).getTjsj())) {
+				pd.setTjsj(DateUtil.getNowDate2yyyyMMddHHmmss());
+				log.info("[MpUtil][submitPaperToCache][openid={}][未提交过paper 允许提交 pd ={}]", openid,pd);
+				paper.getUuid().put(uuid, pd);
+			}
+			log.info("[MpUtil][submitPaperToCache][openid={}][准备更新到缓存的paper={}]", openid,paper);
+			CacheUtil.updateCache(key ,paper);
+			ResultMapUtil.toMap(rst, 1, "保存成功");
 		} catch (Exception e) {
 			e.printStackTrace();
 			ResultMapUtil.toMap(rst, 0, "保存失败");
@@ -330,5 +375,40 @@ public class MpUtil {
 			}
 		}
 		return rst;
+	}
+
+	/**
+	 * 获取考试结果
+	 * @param openid
+	 * @param type
+	 * @param examType
+	 * @param categoryCode
+	 * @param bn
+	 * @return
+	 */
+	public static PaperDetail getPaperDetailResult(String openid) {
+		log.info("[MpUtil][getPaperDetailResult][openid={}]", openid);
+		PaperDetail pd = null;
+		try {
+			String key = openid + "|" + Paper.class;
+			Paper paper =		CacheUtil.getCache(Paper.class, key);
+			log.info("[MpUtil][getPaperDetailResult][openid={}][缓存中的paper={}]", openid,paper);
+			if(paper == null) {
+				paper =	new Paper();
+			}
+			Map<String, PaperDetail> uuidMap = paper.getUuid();
+			if(uuidMap == null) {
+				uuidMap = new HashMap<String, PaperDetail>();
+			}
+			if(StringUtils.isNotBlank(ConvertorUtil.jsonToObject(PaperDetail.class, ConvertorUtil.objectMapper.writeValueAsString(paper.getUuid().get(openid))).getTjsj())) {
+				 pd = ConvertorUtil.jsonToObject(PaperDetail.class, ConvertorUtil.objectMapper.writeValueAsString(paper.getUuid().get(openid)));
+			}
+			log.info("[MpUtil][getPaperDetailResult][openid={}][uuidMap size={}]", openid,uuidMap.size());
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.info("[MpUtil][getPaperDetailResult][openid={}][exception={}]", openid,e);
+		}
+		log.info("[MpUtil][getPaperDetailResult][openid={}][PaperDetail total={}]", openid, pd);
+		return pd;
 	}
 }

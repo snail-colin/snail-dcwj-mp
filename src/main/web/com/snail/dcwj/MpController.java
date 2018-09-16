@@ -16,6 +16,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.snail.core.pojo.PaperDetail;
 import com.snail.core.utils.ConvertorUtil;
 import com.snail.core.utils.MpUtil;
 import com.snail.core.utils.PageBean;
@@ -29,6 +30,15 @@ public class MpController {
 	
 	private static final Logger log = LoggerFactory.getLogger(MpController.class);
 
+	@RequestMapping("/test.htm")
+	@ResponseBody
+	public String test(HttpServletRequest request) throws JsonParseException, JsonMappingException, IOException {
+		RequestUtils re = new RequestUtils(request);
+		Map<String, Object> req_params2 =	re.toSmartMap();
+		System.out.println(req_params2);
+		return "{'a':'b'}";
+	}
+	
 	/**
 	 * 获取题目
 	 */
@@ -111,9 +121,16 @@ public class MpController {
 		PageBean pageBean  = new PageBean();
 		log.info("[/getTestPaper.htm][getTestPaper][req_params={}]",req_params);
 		String openid = (String) req_params.get("openid");
+		String categoryCode = (String) req_params.get("categoryCode");
+		String bn = (String) req_params.get("bn");
 		Integer type = Integer.parseInt(req_params.get("type") + "");
+		byte examType =0;
+		if(StringUtils.isNotBlank((String)req_params.get("examType"))) {
+			examType = Byte.parseByte((String)req_params.get("examType"));
+		}
+		
 		if(StringUtils.isNotBlank(openid) && type != null) {
-			pageBean = MpUtil.getTestPaper(openid,type);
+			pageBean = MpUtil.getTestPaper(openid,type,examType,categoryCode,bn);
 		}
 		log.info("[/getTestPaper.htm][getTestPaper][pageBean total={}]",pageBean.getTotal());
 		return ConvertorUtil.objectToJson(pageBean);
@@ -134,11 +151,30 @@ public class MpController {
 	public Map<String, Object> submitPaper(HttpServletRequest request) throws JsonParseException, JsonMappingException, IOException{
 		String body = RequestUtils.getReq(request);
 		Map<String, Object> req_params = ConvertorUtil.objectMapper.readValue(body, Map.class);
-		log.info("[/getTestPaper.htm][submitPaper][req_params={}]",req_params);
+		log.info("[/submitPaper.htm][submitPaper][req_params={}]",req_params);
 		Map<String, Object> rst = new HashMap<String, Object>();
 		rst = MpUtil.submitPaperToCache(req_params);
-		log.info("[/getTestPaper.htm][submitPaper][rst={}]",rst);
+		log.info("[/submitPaper.htm][submitPaper][rst={}]",rst);
 		return rst;
+	}
+	
+	/**
+	 * 获取考试结果
+	 */
+	@SuppressWarnings("unchecked")
+	@RequestMapping("/getTestPaperResult.htm")
+	@ResponseBody
+	public String getTestPaperResult(HttpServletRequest request) throws JsonGenerationException, JsonMappingException, IOException {
+		String body = RequestUtils.getReq(request);
+		Map<String, Object> req_params = ConvertorUtil.objectMapper.readValue(body, Map.class);
+		PaperDetail pd  = new PaperDetail();
+		log.info("[/getTestPaperResult.htm][getTestPaperResult][req_params={}]",req_params);
+		String openid = (String) req_params.get("openid");
+		if(StringUtils.isNotBlank(openid)) {
+			pd = MpUtil.getPaperDetailResult(openid);
+		}
+		log.info("[/getTestPaperResult.htm][getTestPaperResult][response ={}]",pd);
+		return ConvertorUtil.objectMapper.writeValueAsString(pd);
 	}
 	
 }

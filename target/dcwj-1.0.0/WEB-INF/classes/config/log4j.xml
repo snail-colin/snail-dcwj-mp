@@ -16,7 +16,7 @@
 		<param name="ImmediateFlush" value="true"></param>  
 		<param name="MaxBackupIndex" value="1" />
 		<param name="File"
-			value="${user.home}/logs/answer/answer.log" />
+			value="${user.home}/logs/dcwj/dcwjlog" />
 		<param name="DatePattern" value="'.'yyyy-MM-dd'.log'" />
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="[%d{yyyy-MM-dd HH:mm:ss\} %-5p] %p - %m%n" />

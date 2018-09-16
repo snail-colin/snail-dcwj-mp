@@ -26,14 +26,26 @@
 			expression="org.springframework.stereotype.Controller" />
 	</context:component-scan>
 	
-	
+		<!-- 开启注解 -->
 	<mvc:annotation-driven>
 		<mvc:message-converters register-defaults="true">
 			<bean class="org.springframework.http.converter.StringHttpMessageConverter">
 				<constructor-arg value="UTF-8" />
 			</bean>
+			<bean id="mappingJackson2HttpMessageConverter" 
+		    		class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+		        <property name="supportedMediaTypes">
+		            <list>
+		            	<value>application/json;charset=UTF-8</value>
+		                <value>text/html;charset=UTF-8</value>
+		                <value>text/json;charset=UTF-8</value>    
+		            </list>
+		        </property>
+		     </bean>
 		</mvc:message-converters>
-	</mvc:annotation-driven> 
+	</mvc:annotation-driven>
+	
+	
 	
 	<mvc:default-servlet-handler />
 	<mvc:resources mapping="/resources/**" location="/resources/" />

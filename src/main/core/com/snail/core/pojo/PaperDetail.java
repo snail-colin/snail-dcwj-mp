@@ -31,7 +31,7 @@ public class PaperDetail implements Serializable{
 	/**
 	 * 作答时间
 	 */
-	public Integer tiem;
+	public Integer time;
 	
 	/**
 	 * 分数
@@ -66,57 +66,87 @@ public class PaperDetail implements Serializable{
 		this.uuid = uuid;
 	}
 
-	public Integer getTiem() {
-		return tiem;
+
+
+	public Integer getTime() {
+		return time;
 	}
 
-	public void setTiem(Integer tiem) {
-		this.tiem = tiem;
+
+
+	public void setTime(Integer time) {
+		this.time = time;
 	}
+
+
 
 	public Integer getScore() {
 		return score;
 	}
 
+
+
 	public void setScore(Integer score) {
 		this.score = score;
 	}
+
+
 
 	public String getBkcx() {
 		return bkcx;
 	}
 
+
+
 	public void setBkcx(String bkcx) {
 		this.bkcx = bkcx;
 	}
+
+
 
 	public String getBkkm() {
 		return bkkm;
 	}
 
+
+
 	public void setBkkm(String bkkm) {
 		this.bkkm = bkkm;
 	}
+
+
 
 	public String getKsdd() {
 		return ksdd;
 	}
 
+
+
 	public void setKsdd(String ksdd) {
 		this.ksdd = ksdd;
 	}
+
+
 
 	public String getTjsj() {
 		return tjsj;
 	}
 
+
+
 	public void setTjsj(String tjsj) {
 		this.tjsj = tjsj;
 	}
 
+
+
 	@Override
 	public String toString() {
-		return "PaperDetail [uuid=" + uuid + ", tiem=" + tiem + ", score=" + score + ", bkcx=" + bkcx + ", bkkm=" + bkkm
+		return "PaperDetail [uuid=" + uuid + ", time=" + time + ", score=" + score + ", bkcx=" + bkcx + ", bkkm=" + bkkm
 				+ ", ksdd=" + ksdd + ", tjsj=" + tjsj + "]";
 	}
+
+
+
+
 }

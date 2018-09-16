@@ -21,6 +21,11 @@ public class PropertiesUtil {
 	 */
 	public static String MP_PLATFORM_TOKEN;
 	
+//	
+//	public static String WEIXIN_TOKEN;
+//	public static String MP_PLATFORM_TOKEN;
+//	public static String MP_PLATFORM_TOKEN;
+	
 	static {
 		InputStream is = null;
 		String name = "/config/snail-"  + System.getProperty("server.run.type", "test") + ".properties";

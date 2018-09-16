@@ -37,7 +37,7 @@
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
 		<property name="locations">
 			<list>
-				 <value>classpath*:config/redis-${server.run.type}.properties</value>
+				 <value>classpath*:config/snail-${server.run.type}.properties</value>
 			</list>
 		</property>
 	</bean>
