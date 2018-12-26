@@ -189,6 +189,18 @@
 		<artifactId>jackson-databind</artifactId>
 		<version>2.4.3</version>
 	</dependency>
+	
+	<dependency>
+			<groupId>org.bouncycastle</groupId>
+		  <artifactId>bcprov-jdk16</artifactId>
+		  <version>1.46</version>
+	</dependency>
+	
+	<dependency>
+	 <groupId>org.codehaus.xfire</groupId>
+	  <artifactId>xfire-core</artifactId>
+	   <version>1.2.6</version>
+	</dependency>
 
 	</dependencies>
 

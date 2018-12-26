@@ -21,10 +21,12 @@ public class PropertiesUtil {
 	 */
 	public static String MP_PLATFORM_TOKEN;
 	
-//	
-//	public static String WEIXIN_TOKEN;
-//	public static String MP_PLATFORM_TOKEN;
-//	public static String MP_PLATFORM_TOKEN;
+	  public static String MP_APP_SECRET;
+	  public static String ADDR;
+	  public static String PORT;
+	  public static String AUTH;
+	  public static String CACHE_DB;
+
 	
 	static {
 		InputStream is = null;
@@ -46,6 +48,12 @@ public class PropertiesUtil {
 		MP_URL = properties.getProperty("MP_URL");
 		MP_APPID = properties.getProperty("MP_APPID");
 		MP_PLATFORM_TOKEN = properties.getProperty("MP_PLATFORM_TOKEN");
+		
+		MP_APP_SECRET = properties.getProperty("MP_APP_SECRET");
+		ADDR = properties.getProperty("CACHE_HOST");
+		PORT = properties.getProperty("CACHE_PORT");
+		AUTH = properties.getProperty("CACHE_PWD");
+		CACHE_DB = properties.getProperty("CACHE_DB");
 	}
 	
 	public static String getProperty(String key) {

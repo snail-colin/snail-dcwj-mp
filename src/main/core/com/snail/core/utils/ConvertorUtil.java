@@ -306,5 +306,39 @@ public class ConvertorUtil {
 		}
 		return instance;
 	}
+	
+	public static Map<String, Object> json2map(String json)
+	  {
+	    Map<String, Object> rst = null;
+	    try {
+	      rst = objectMapper.readValue(json, Map.class);
+	    } catch (IOException e) {
+	      e.printStackTrace();
+	    }
+	    return rst;
+	  }
+
+	  public static <T> T json2Pojo(Class<T> clazz, String json)
+	  {
+	    Object instance = null;
+	    try {
+	      instance = objectMapper.readValue(json, clazz);
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	    }
+	    return (T) instance;
+	  }
+
+	  public static String pojo2Json(Object pojo)
+	  {
+	    String rst = "";
+	    try {
+	      rst = objectMapper.writeValueAsString(pojo);
+	    }
+	    catch (IOException e) {
+	      e.printStackTrace();
+	    }
+	    return rst;
+	  }
 
 }

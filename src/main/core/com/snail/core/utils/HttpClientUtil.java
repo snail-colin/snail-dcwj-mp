@@ -164,6 +164,46 @@ public class HttpClientUtil {
 		return result;
 	}
 	
+	
+	  public static String getRequst(String url)
+	  {
+	    logger.info("GetRequst*********");
+	    HttpGet httpGet = new HttpGet(url);
+	    logger.info("HttpGet********");
+	    RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(30000).setConnectTimeout(2000).build();
+	    logger.info("RequestConfig********");
+	    httpGet.setConfig(requestConfig);
+	    logger.info("RequestConfig********");
+	    String result = null;
+	    try
+	    {
+	      String str1;
+	      logger.info("开始发送请求...");
+	      logger.info("请求URL信息：{}", url);
+	      CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
+
+	      HttpEntity entity = httpResponse.getEntity();
+	      logger.info("发送返回.");
+
+	      logger.info("status:" + httpResponse.getStatusLine());
+
+	      if (entity != null) {
+	        logger.info("contentEncoding:" + entity.getContentEncoding());
+	        result = EntityUtils.toString(entity, "UTF-8");
+	        logger.info("response content:\r\n" + result + "\r\n");
+	      }
+	      return result;
+	    } catch (IOException e) {
+	      logger.info(e.getMessage());
+	    }
+	    finally {
+	      httpGet.releaseConnection();
+	    }
+	    return result;
+	  }
+
+
+	  
 	public static String postRequst(String request,String url) {
 		logger.info("请求URL信息：{}",url);
 		HttpPost httpPost = new HttpPost(url);

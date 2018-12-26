@@ -1,5 +1,6 @@
 package com.snail.core.utils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -8,6 +9,8 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -119,7 +122,7 @@ public class MpUtil {
 				String token = TokenUtil.getToken();
 				Map<String, Object> params = new HashMap<String, Object>();
 				params.put("token", token);
-				params.put("categoryCode", "one");
+				params.put("categoryCode", "baks");
 				params.put("pageSize", 9999);
 				params.put("qtype", type);
 				pageBean = MpUtil.getQuestionList(params);
@@ -198,7 +201,7 @@ public class MpUtil {
 				mpParams.put("answer", answer);
 				mpParams.put("type", type);
 				mpParams.put("userMark", openid);
-				mpParams.put("paperId", "SYSTEM_QUESTION_"  + "ONE$" +  openid + "$" + type);
+				mpParams.put("paperId", "SYSTEM_QUESTION_BAKS$" +  openid + "$" + type);
 				
 				log.info("[MpUtil][saveAnswer][{}][开始更新到平台]",session);
 				ThreadPool.getFixedInstance().execute(new Runnable() {
@@ -244,6 +247,32 @@ public class MpUtil {
 		return rst;
 	}
 
+	public static Map<String, Object> getCacheAnswerSchedule(String openid)
+	  {
+		Map<String, Object> rst = new HashMap<String, Object>();
+	    long session = System.currentTimeMillis() + RandomUtils.nextInt(9);
+	    log.info("[MpUtil][getCacheAnswerSchedule][{}][request openid={}]", Long.valueOf(session), openid);
+
+	    int type = 0;
+	    String key = openid + "|" + type;
+	    PageBean pageBean = (PageBean)CacheUtil.getCache(PageBean.class, key);
+	    if (pageBean == null)
+	      pageBean = getCacheQuestion(openid, Integer.valueOf(type));
+
+	    rst.put("total" + pageBean.getType(), pageBean.getTotal());
+	    rst.put("recordCount" + pageBean.getType(), Integer.valueOf((pageBean.getRecordCount() == null) ? 0 : pageBean.getRecordCount().intValue()));
+
+	    type = 1;
+	    key = openid + "|" + type;
+	    pageBean = (PageBean)CacheUtil.getCache(PageBean.class, key);
+	    if (pageBean == null)
+	      pageBean = getCacheQuestion(openid, Integer.valueOf(type));
+
+	    rst.put("total" + pageBean.getType(), pageBean.getTotal());
+	    rst.put("recordCount" + pageBean.getType(), Integer.valueOf((pageBean.getRecordCount() == null) ? 0 : pageBean.getRecordCount().intValue()));
+	    return rst;
+	  }
+	
 	/**
 	 * 获取题目
 	 * @param openid
@@ -266,7 +295,7 @@ public class MpUtil {
 			}
 			Map<String, Object> params = new HashMap<String, Object>();
 			params.put("token", token);
-			params.put("categoryCode", "one");
+			params.put("categoryCode", "baks");
 			//指定题目
 			if(StringUtils.isNotBlank(categoryCode)) {
 				params.put("categoryCode", categoryCode);
@@ -411,4 +440,20 @@ public class MpUtil {
 		log.info("[MpUtil][getPaperDetailResult][openid={}][PaperDetail total={}]", openid, pd);
 		return pd;
 	}
+	
+	public static Map<String, Object> decrypt(Map<String, Object> req_params)
+		    throws JsonGenerationException, JsonMappingException, IOException
+		  {
+		    log.info("[MpUtil][decrypt][request={}]", req_params);
+		    Map<String,Object> rst = new HashMap<String,Object>();
+
+		    String code = (String)req_params.get("code");
+		    String encryptedData = (String)req_params.get("encryptedData");
+		    String iv = (String)req_params.get("iv");
+		    String result = WeixinUtil.getUserInfo(encryptedData, code, iv);
+		    log.info("[MpUtil][decrypt][httpClient result={}]", result);
+		    rst = ConvertorUtil.json2map(result);
+		    log.info("[MpUtil][decrypt][response={}]", rst);
+		    return rst;
+		  }
 }
